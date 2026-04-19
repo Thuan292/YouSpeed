@@ -84,18 +84,9 @@ static void didSelectRate(float rate) {
 
 %group Video
 
-%hook YTPlayerOverlayManager
-
-- (void)varispeedSwitchController:(id)arg1 didSelectRate:(float)rate {
-    didSelectRate(rate);
-    %orig;
-}
-
-%end
-
 %hook YTPlayerViewController
 
-- (void)varispeedSwitchController:(id)arg1 didSelectRate:(float)rate {
+- (void)setPlaybackRate:(float)rate {
     didSelectRate(rate);
     %orig;
 }
