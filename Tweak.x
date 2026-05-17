@@ -1,7 +1,7 @@
 #import "../YTVideoOverlay/Header.h"
 #import "../YTVideoOverlay/Init.x"
 #import <YouTubeHeader/MDCSlider.h>
-// #import <YouTubeHeader/MLAVPlayer.h>
+#import <YouTubeHeader/MLAVPlayer.h>
 #import <YouTubeHeader/MLHAMPlayerItemSegment.h>
 #import <YouTubeHeader/MLHAMQueuePlayer.h>
 #import <YouTubeHeader/QTMIcon.h>
@@ -245,28 +245,6 @@ static void didSelectRate(float rate) {
 
 %end
 
-// %hook MLAVPlayer
-
-// - (void)setRate:(float)newRate {
-//     MLInnerTubePlayerConfig *config = [self valueForKey:@"_config"];
-//     if (![config varispeedAllowed]) return;
-//     float rate = [[self valueForKey:@"_rate"] floatValue];
-//     if (rate == newRate) return;
-//     [self setValue:@(newRate) forKey:@"_rate"];
-//     self.assetPlayer.rate = newRate;
-//     MLPlayerStickySettings *stickySettings = [self valueForKey:@"_stickySettings"];
-//     stickySettings.rate = newRate;
-//     MLPlayerEventCenter *eventCenter = [self valueForKey:@"_playerEventCenter"];
-//     [eventCenter broadcastRateChange:newRate];
-//     [self.delegate playerRateDidChange:newRate];
-// }
-
-// %end
-
-%end
-
-%group OverrideMaxSpeed
-
 %hook YTIPlayerHotConfig
 
 %new(f@:)
@@ -281,6 +259,35 @@ static void didSelectRate(float rate) {
 %new(d@:)
 - (int)maximumPlaybackRate {
     return MAX_SPEED * 100;
+}
+
+%end
+
+%end
+
+%group AVPlayer
+
+%hook MLAVPlayer
+
+- (float)maximumSupportedPlaybackRate {
+    return MAX_SPEED;
+}
+
+- (void)setRate:(float)newRate {
+    MLInnerTubePlayerConfig *config = [self valueForKey:@"_config"];
+    if (![config varispeedAllowed]) return;
+    float rate = [[self valueForKey:@"_rate"] floatValue];
+    if (rate == newRate) return;
+    [self setValue:@(newRate) forKey:@"_rate"];
+    self.assetPlayer.rate = newRate;
+    MLPlayerStickySettings *stickySettings = [self valueForKey:@"_stickySettings"];
+    stickySettings.rate = newRate;
+    MLPlayerEventCenter *eventCenter = [self valueForKey:@"_playerEventCenter"];
+    [eventCenter broadcastRateChange:newRate];
+    if ([self.delegate respondsToSelector:@selector(player:rateDidChange:)])
+        [self.delegate player:self rateDidChange:newRate];
+    else
+        [self.delegate playerRateDidChange:newRate];
 }
 
 %end
@@ -305,7 +312,7 @@ static void didSelectRate(float rate) {
     slider.statefulAPIEnabled = YES;
     slider.thumbHollowAtStart = NO;
     slider.minimumValue = MIN_SPEED;
-    slider.maximumValue = MAX_SPEED;
+    slider.maximumValue = MoreSpeed() ? MAX_SPEED : 2.0;
     slider.value = currentPlaybackRate;
     slider.continuous = NO;
     slider.accessibilityLabel = sliderLabel;
@@ -320,7 +327,7 @@ static void didSelectRate(float rate) {
     [minLabel setTypeKind:22];
 
     YTLabel *maxLabel = [%c(YTLabel) new];
-    maxLabel.text = speedLabel(MAX_SPEED);
+    maxLabel.text = speedLabel(MoreSpeed() ? MAX_SPEED : 2.0);
     maxLabel.textAlignment = NSTextAlignmentRight;
     maxLabel.tag = 'maxl';
     [maxLabel yt_setSize:labelSize];
@@ -588,11 +595,10 @@ YouSpeedSliderAlertView *alert;
     %init(Video);
     %init(Top);
     %init(Bottom);
-    if (MoreSpeed() || SpeedSlider()) {
-        %init(OverrideMaxSpeed);
-    }
     if (MoreSpeed()) {
         %init(Speed);
+        if (dlopen(PS_ROOT_PATH("/Library/MobileSubstrate/DynamicLibraries/UncappedAVPlayer.dylib"), RTLD_NOW))
+            %init(AVPlayer);
     }
     if (FixNativeSpeed()) {
         %init(OverrideNative);
