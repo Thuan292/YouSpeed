@@ -361,50 +361,34 @@ static void didSelectRate(float rate) {
     [plusButton yt_setSize:adjustButtonSize];
     [plusButton addTarget:delegate action:@selector(didPressPlusButton:) forControlEvents:UIControlEventTouchUpInside];
 
-    YTQTMButton *speed025Button = [%c(YTQTMButton) textButton];
-    speed025Button.flatButtonHasOpaqueBackground = YES;
-    speed025Button.sizeWithPaddingAndInsets = YES;
-    speed025Button.tag = 's025';
-    [speed025Button yt_setSize:presetButtonSize];
-    [speed025Button setTitleTypeKind:21];
-    [speed025Button setTitle:@"0.25x" forState:UIControlStateNormal];
-    [speed025Button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
+    struct {
+        NSInteger tag;
+        NSString *title;
+    } presetSpeedConfigs[] = {
+        {'s025', @"0.25x"},
+        {'s050', @"0.5x"},
+        {'s100', @"1x"},
+        {'s150', @"1.5x"},
+        {'s200', @"2x"},
+    };
+    NSUInteger presetCount = sizeof(presetSpeedConfigs) / sizeof(presetSpeedConfigs[0]);
 
-    YTQTMButton *speed050Button = [%c(YTQTMButton) textButton];
-    speed050Button.flatButtonHasOpaqueBackground = YES;
-    speed050Button.sizeWithPaddingAndInsets = YES;
-    speed050Button.tag = 's050';
-    [speed050Button yt_setSize:presetButtonSize];
-    [speed050Button setTitleTypeKind:21];
-    [speed050Button setTitle:@"0.5x" forState:UIControlStateNormal];
-    [speed050Button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
-
-    YTQTMButton *speed100Button = [%c(YTQTMButton) textButton];
-    speed100Button.flatButtonHasOpaqueBackground = YES;
-    speed100Button.sizeWithPaddingAndInsets = YES;
-    speed100Button.tag = 's100';
-    [speed100Button yt_setSize:presetButtonSize];
-    [speed100Button setTitleTypeKind:21];
-    [speed100Button setTitle:@"1x" forState:UIControlStateNormal];
-    [speed100Button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
-
-    YTQTMButton *speed150Button = [%c(YTQTMButton) textButton];
-    speed150Button.flatButtonHasOpaqueBackground = YES;
-    speed150Button.sizeWithPaddingAndInsets = YES;
-    speed150Button.tag = 's150';
-    [speed150Button yt_setSize:presetButtonSize];
-    [speed150Button setTitleTypeKind:21];
-    [speed150Button setTitle:@"1.5x" forState:UIControlStateNormal];
-    [speed150Button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
-
-    YTQTMButton *speed200Button = [%c(YTQTMButton) textButton];
-    speed200Button.flatButtonHasOpaqueBackground = YES;
-    speed200Button.sizeWithPaddingAndInsets = YES;
-    speed200Button.tag = 's200';
-    [speed200Button yt_setSize:presetButtonSize];
-    [speed200Button setTitleTypeKind:21];
-    [speed200Button setTitle:@"2x" forState:UIControlStateNormal];
-    [speed200Button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
+    NSMutableArray *presetButtons = [NSMutableArray arrayWithCapacity:presetCount];
+    for (NSUInteger i = 0; i < presetCount; i++) {
+        YTQTMButton *button = [%c(YTQTMButton) textButton];
+        button.flatButtonHasOpaqueBackground = YES;
+        button.sizeWithPaddingAndInsets = NO;
+#pragma clang diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        button.contentEdgeInsets = UIEdgeInsetsZero;
+#pragma clang diagnostic pop
+        button.tag = presetSpeedConfigs[i].tag;
+        [button yt_setSize:presetButtonSize];
+        [button setTitleTypeKind:21];
+        [button setTitle:presetSpeedConfigs[i].title forState:UIControlStateNormal];
+        [button addTarget:delegate action:@selector(didPressSpeedPresetButton:) forControlEvents:UIControlEventTouchUpInside];
+        [presetButtons addObject:button];
+    }
 
     CGFloat contentWidth = [%c(YTCommonUtils) isIPad] ? 350 : 250;
     UIView *contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, contentWidth, 120)];
@@ -414,11 +398,9 @@ static void didSelectRate(float rate) {
     [contentView addSubview:currentValueLabel];
     [contentView addSubview:minusButton];
     [contentView addSubview:plusButton];
-    [contentView addSubview:speed025Button];
-    [contentView addSubview:speed050Button];
-    [contentView addSubview:speed100Button];
-    [contentView addSubview:speed150Button];
-    [contentView addSubview:speed200Button];
+    for (YTQTMButton *button in presetButtons) {
+        [contentView addSubview:button];
+    }
 
     CGFloat sliderWidth = contentWidth - 80;
     slider.frame = CGRectMake(0, 0, sliderWidth, adjustButtonSize.height);
@@ -437,12 +419,13 @@ static void didSelectRate(float rate) {
     YTQTMButton *minusButton = [contentView viewWithTag:'mbtn'];
     YTQTMButton *plusButton = [contentView viewWithTag:'pbtn'];
     MDCSlider *slider = [contentView viewWithTag:'slid'];
-    YTQTMButton *speed025Button = [contentView viewWithTag:'s025'];
-    YTQTMButton *speed050Button = [contentView viewWithTag:'s050'];
-    YTQTMButton *speed100Button = [contentView viewWithTag:'s100'];
-    YTQTMButton *speed150Button = [contentView viewWithTag:'s150'];
-    YTQTMButton *speed200Button = [contentView viewWithTag:'s200'];
-    NSArray <YTQTMButton *> *presetButtons = @[speed025Button, speed050Button, speed100Button, speed150Button, speed200Button];
+    
+    NSMutableArray *presetButtons = [NSMutableArray array];
+    NSInteger presetTags[] = {'s025', 's050', 's100', 's150', 's200'};
+    for (int i = 0; i < 5; i++) {
+        UIView *button = [contentView viewWithTag:presetTags[i]];
+        if (button) [presetButtons addObject:button];
+    }
 
     [slider alignCenterTopToCenterTopOfView:contentView paddingY:0];
     [minLabel alignTopLeadingToBottomLeadingOfView:slider paddingX:0 paddingY:10];
@@ -455,7 +438,7 @@ static void didSelectRate(float rate) {
     CGFloat buttonY = currentValueLabel.frame.origin.y + currentValueLabel.frame.size.height + 15;
 
     if ([UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft)
-        presetButtons = [[presetButtons reverseObjectEnumerator] allObjects];
+        presetButtons = (NSMutableArray *)[[presetButtons reverseObjectEnumerator] allObjects];
     for (int i = 0; i < presetButtons.count; ++i) {
         YTQTMButton *button = presetButtons[i];
         [button yt_setOrigin:CGPointMake(i * (padding + 50), buttonY)];
@@ -477,11 +460,13 @@ static void didSelectRate(float rate) {
     YTLabel *currentValueLabel = [contentView viewWithTag:'cvl0'];
     YTQTMButton *minusButton = [contentView viewWithTag:'mbtn'];
     YTQTMButton *plusButton = [contentView viewWithTag:'pbtn'];
-    YTQTMButton *speed025Button = [contentView viewWithTag:'s025'];
-    YTQTMButton *speed050Button = [contentView viewWithTag:'s050'];
-    YTQTMButton *speed100Button = [contentView viewWithTag:'s100'];
-    YTQTMButton *speed150Button = [contentView viewWithTag:'s150'];
-    YTQTMButton *speed200Button = [contentView viewWithTag:'s200'];
+
+    NSMutableArray *presetButtons = [NSMutableArray array];
+    NSInteger presetTags[] = {'s025', 's050', 's100', 's150', 's200'};
+    for (int i = 0; i < 5; ++i) {
+        YTQTMButton *button = (YTQTMButton *)[contentView viewWithTag:presetTags[i]];
+        if (button) [presetButtons addObject:button];
+    }
 
     UIColor *textColor = [colorPalette textPrimary];
     UIColor *adjustButtonBackgroundColor = [UIColor colorWithWhite:pageStyle alpha:0.2];
@@ -492,16 +477,12 @@ static void didSelectRate(float rate) {
     minusButton.enabledBackgroundColor = adjustButtonBackgroundColor;
     plusButton.tintColor = textColor;
     plusButton.enabledBackgroundColor = adjustButtonBackgroundColor;
-    speed025Button.customTitleColor
-        = speed050Button.customTitleColor
-        = speed100Button.customTitleColor
-        = speed150Button.customTitleColor
-        = speed200Button.customTitleColor = textColor;
-    speed025Button.enabledBackgroundColor
-        = speed050Button.enabledBackgroundColor
-        = speed100Button.enabledBackgroundColor
-        = speed150Button.enabledBackgroundColor
-        = speed200Button.enabledBackgroundColor = adjustButtonBackgroundColor;
+    
+    for (YTQTMButton *button in presetButtons) {
+        button.customTitleColor = textColor;
+        button.enabledBackgroundColor = adjustButtonBackgroundColor;
+    }
+    
     [slider setThumbColor:textColor forState:UIControlStateNormal];
     [slider setTrackFillColor:textColor forState:UIControlStateNormal];
 }
@@ -597,8 +578,9 @@ YouSpeedSliderAlertView *alert;
     %init(Bottom);
     if (MoreSpeed()) {
         %init(Speed);
-        if (dlopen(PS_ROOT_PATH("/Library/MobileSubstrate/DynamicLibraries/UncappedAVPlayer.dylib"), RTLD_NOW))
+        if (dlopen(PS_ROOT_PATH("/Library/MobileSubstrate/DynamicLibraries/UncappedAVPlayer.dylib"), RTLD_NOLOAD)) {
             %init(AVPlayer);
+        }
     }
     if (FixNativeSpeed()) {
         %init(OverrideNative);
