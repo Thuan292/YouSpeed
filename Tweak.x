@@ -236,9 +236,14 @@ static void didSelectRate(float rate) {
 - (void)setRate:(float)newRate {
     float rate = [[self valueForKey:@"_rate"] floatValue];
     if (rate == newRate) return;
-    MLHAMPlayerItemSegment *segment = [self valueForKey:@"_currentSegment"];
-    MLInnerTubePlayerConfig *config = [segment playerItem].config;
-    if (![config varispeedAllowed]) return;
+    MLHAMPlayerItem *playerItem = nil;
+    if ([self respondsToSelector:@selector(currentPlayerItem)]) {
+        playerItem = [self currentPlayerItem];
+    } else {
+        MLHAMPlayerItemSegment *segment = [self valueForKey:@"_currentSegment"];
+        playerItem = [segment playerItem];
+    }
+    if (![playerItem.config varispeedAllowed]) return;
     [self setValue:@(newRate) forKey:@"_rate"];
     [self internalSetRate];
 }
