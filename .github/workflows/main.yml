@@ -1,0 +1,37 @@
+name: Build YouSpeed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+      - name: Setup iOS SDK
+        run: |
+          curl -LO https://github.com/theos/sdks/archive/master.zip
+          unzip -q master.zip
+          mv sdks-master/*.sdk $HOME/theos/sdks/
+          rm -rf master.zip sdks-master
+
+      - name: Compile Dylib
+        run: |
+          make FINALPACKAGE=1
+          mkdir -p output
+          find .theos/obj -name "*.dylib" -exec cp {} output/ \;
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouSpeed-Dylib
+          path: output/*.dylib
