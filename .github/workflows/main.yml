@@ -24,8 +24,9 @@ jobs:
           mv sdks-master/*.sdk $HOME/theos/sdks/
           rm -rf master.zip sdks-master
 
-      - name: Clone Dependency (YTVideoOverlay)
+      - name: Setup Dependencies
         run: |
+          git clone https://github.com/PoomSmart/YouTubeHeader.git $HOME/theos/include/YouTubeHeader
           git clone https://github.com/PoomSmart/YTVideoOverlay.git ../YTVideoOverlay
 
       - name: Compile Dylib
