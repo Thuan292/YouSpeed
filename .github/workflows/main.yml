@@ -26,8 +26,14 @@ jobs:
 
       - name: Setup Dependencies
         run: |
+          # 1. YouTubeHeader (Cần cho YouSpeed)
           git clone https://github.com/PoomSmart/YouTubeHeader.git $HOME/theos/include/YouTubeHeader
+          
+          # 2. YTVideoOverlay (Cần cho YouSpeed)
           git clone https://github.com/PoomSmart/YTVideoOverlay.git ../YTVideoOverlay
+          
+          # 3. PSHeader (Cần cho YTVideoOverlay - Lỗi vừa gặp)
+          git clone https://github.com/PoomSmart/PSHeader.git $HOME/theos/include/PSHeader
 
       - name: Compile Dylib
         run: |
